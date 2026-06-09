@@ -13,6 +13,7 @@
 - API 请求/响应格式、DTO 校验规则、错误码体系
 - 前端组件规范、路由策略、状态管理方案
 - 安全模型（JWT 双 Token、权限守卫层级）
+- **测试分层策略、工具选型、覆盖率目标**
 
 ---
 
@@ -404,11 +405,456 @@ chore: 升级 Element Plus 版本
 | **登录页面** | `apps/web/src/views/login/LoginView.vue` | 表单验证 + 登录逻辑 |
 | **布局框架** | `apps/web/src/views/layout/Layout.vue` | Sidebar + Header + TagsView |
 | **仪表盘** | `apps/web/src/views/dashboard/DashboardView.vue` | 首页占位 |
-| **本报告** | `docs/m1-architecture.md` | M1 架构设计文档 |
+| **后端测试配置** | `apps/server/test/jest-e2e.json` | E2E 测试配置（后续补充） |
+| **前端测试配置** | `apps/web/vitest.config.ts` | Vitest 测试配置（后续补充） |
+| **本报告** | `docs/m1-architecture.md` | M1 架构设计文档（含测试架构） |
 
 ---
 
-## 10. 下一步（M2: 后端核心基础设施）
+## 10. 测试架构
+
+### 10.1 测试分层策略
+
+| 层级 | 类型 | 目标 | 覆盖范围 | 目标覆盖率 |
+|------|------|------|----------|------------|
+| **L1** | 单元测试 | 验证单个函数/组件的正确性 | 工具函数、纯组件、DTO 校验、Service 方法 | **≥ 70%** |
+| **L2** | 集成测试 | 验证模块间协作 | Controller + Service + Prisma（内存数据库） | **≥ 50%** |
+| **L3** | E2E 测试 | 验证完整用户流程 | 关键路径：登录→获取菜单→CRUD 操作→退出 | **≥ 20%** |
+
+**测试原则：**
+- 先写核心逻辑单元测试，再补集成测试，最后 E2E 覆盖主路径
+- 不测试第三方库（Prisma、NestJS、Vue 内部），只测试业务逻辑
+- 测试文件名与被测文件同级，后缀 `.spec.ts` 或 `.test.ts`
+
+### 10.2 后端测试（NestJS）
+
+**工具选型：**
+
+| 工具 | 用途 | 版本 |
+|------|------|------|
+| Jest | 测试框架（NestJS 内置） | 29+ |
+| @nestjs/testing | NestJS 测试工具（Test.createTestingModule） | 11+ |
+| sqlite3 / better-sqlite3 | Prisma 测试数据库（内存模式） | - |
+| supertest | HTTP 请求断言 | 7+ |
+| faker-js | 测试数据生成 | 9+ |
+
+**测试目录结构：**
+
+```
+apps/server/src/
+├── modules/
+│   ├── user/
+│   │   ├── user.service.ts
+│   │   ├── user.controller.ts
+│   │   ├── user.module.ts
+│   │   ├── dto/
+│   │   └── **user.service.spec.ts**      # 单元测试
+│   ├── auth/
+│   │   ├── auth.service.ts
+│   │   ├── auth.controller.ts
+│   │   └── **auth.controller.spec.ts**   # 集成测试
+│   └── ...
+├── common/
+│   └── filters/
+│       └── **global-exception.filter.spec.ts**
+└── test/                                  # 全局测试配置
+    ├── **jest-e2e.json**                  # E2E 配置
+    ├── **setup.ts**                       # 全局 setup（数据库清理）
+    └── **factories.ts**                   # 测试工厂函数（生成假数据）
+```
+
+**测试示例（Service 单元测试）：**
+
+```typescript
+// user.service.spec.ts
+import { Test } from '@nestjs/testing';
+import { UserService } from './user.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { faker } from '@faker-js/faker';
+
+describe('UserService', () => {
+  let service: UserService;
+  let prisma: PrismaService;
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [UserService, PrismaService],
+    }).compile();
+
+    service = module.get(UserService);
+    prisma = module.get(PrismaService);
+  });
+
+  afterEach(async () => {
+    await prisma.user.deleteMany();
+  });
+
+  describe('create', () => {
+    it('应创建新用户并返回用户信息', async () => {
+      const dto = {
+        username: faker.internet.userName(),
+        password: faker.internet.password(),
+        nickname: faker.person.fullName(),
+      };
+
+      const result = await service.create(dto);
+
+      expect(result.username).toBe(dto.username);
+      expect(result.password).not.toBe(dto.password); // 已哈希
+      expect(result.status).toBe(1);
+    });
+
+    it('用户名已存在时应抛出冲突异常', async () => {
+      // 先创建用户
+      const dto = { username: 'admin', password: '123456' };
+      await service.create(dto);
+
+      // 再次创建应报错
+      await expect(service.create(dto)).rejects.toThrow(/已存在/);
+    });
+  });
+
+  describe('findOne', () => {
+    it('应返回用户详情含角色信息', async () => {
+      const user = await prisma.user.create({
+        data: {
+          username: 'test',
+          password: '***',
+          nickname: '测试用户',
+        },
+      });
+
+      const result = await service.findOne(user.id);
+
+      expect(result.id).toBe(user.id);
+      expect(result.roles).toBeDefined();
+    });
+
+    it('用户不存在时应返回 null', async () => {
+      const result = await service.findOne(99999);
+      expect(result).toBeNull();
+    });
+  });
+});
+```
+
+**测试示例（Controller 集成测试）：**
+
+```typescript
+// auth.controller.spec.ts
+import { Test } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { AppModule } from '../app.module';
+
+describe('AuthController (e2e)', () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    const module = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = module.createNestApplication();
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  describe('POST /api/auth/login', () => {
+    it('正确凭证应返回 Access Token + Refresh Token', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .send({ username: 'admin', password: 'admin123' })
+        .expect(200);
+
+      expect(res.body.code).toBe(0);
+      expect(res.body.data.accessToken).toBeDefined();
+      expect(res.body.data.refreshToken).toBeDefined();
+      expect(res.body.data.expiresIn).toBe(7200);
+    });
+
+    it('错误密码应返回 401', async () => {
+      await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .send({ username: 'admin', password: 'wrong' })
+        .expect(401);
+    });
+  });
+});
+```
+
+**Prisma 测试数据库配置：**
+
+```typescript
+// test/setup.ts
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+beforeAll(async () => {
+  // 清理测试数据
+  await prisma.user.deleteMany();
+  await prisma.role.deleteMany();
+  await prisma.menu.deleteMany();
+});
+
+afterAll(async () => {
+  await prisma.$disconnect();
+});
+```
+
+### 10.3 前端测试（Vue 3）
+
+**工具选型：**
+
+| 工具 | 用途 | 版本 |
+|------|------|------|
+| Vitest | 测试框架（Vite 原生） | 2+ |
+| Vue Test Utils | Vue 组件测试 | 2+ |
+| @testing-library/vue | 组件测试（更贴近用户行为） | 8+ |
+| jsdom / happy-dom | DOM 模拟环境 | - |
+| MSW (Mock Service Worker) | API 请求 mock | 2+ |
+| @vitest/coverage-v8 | 覆盖率报告 | 2+ |
+
+**测试目录结构：**
+
+```
+apps/web/src/
+├── components/
+│   ├── ProTable/
+│   │   ├── ProTable.vue
+│   │   └── **ProTable.spec.ts**          # 组件测试
+│   └── ProForm/
+│       ├── ProForm.vue
+│       └── **ProForm.spec.ts**
+├── views/
+│   ├── login/
+│   │   ├── LoginView.vue
+│   │   └── **LoginView.spec.ts**         # 页面测试
+│   └── system/
+│       └── user/
+│           ├── UserView.vue
+│           └── **UserView.spec.ts**
+├── utils/
+│   ├── request.ts
+│   └── **request.spec.ts**               # 工具函数测试
+├── composables/
+│   ├── usePagination.ts
+│   └── **usePagination.spec.ts**           # 组合式函数测试
+├── store/
+│   ├── user.ts
+│   └── **user.spec.ts**                  # 状态管理测试
+└── test/
+    ├── **setup.ts**                      # 全局 setup（mock 配置）
+    └── **mocks/handlers.ts**             # MSW mock 处理器
+```
+
+**测试示例（组件测试）：**
+
+```typescript
+// LoginView.spec.ts
+import { describe, it, expect, vi } from 'vitest';
+import { mount } from '@vue/test-utils';
+import { createPinia } from 'pinia';
+import { createRouter, createWebHistory } from 'vue-router';
+import LoginView from '../views/login/LoginView.vue';
+import ElementPlus from 'element-plus';
+
+describe('LoginView', () => {
+  const router = createRouter({
+    history: createWebHistory(),
+    routes: [{ path: '/', component: { template: '<div>Home</div>' } }],
+  });
+
+  it('应渲染登录表单', () => {
+    const wrapper = mount(LoginView, {
+      global: {
+        plugins: [createPinia(), router, ElementPlus],
+      },
+    });
+
+    expect(wrapper.find('h2').text()).toBe('SSS IMS');
+    expect(wrapper.find('input[type="password"]').exists()).toBe(true);
+  });
+
+  it('空表单提交时应显示验证错误', async () => {
+    const wrapper = mount(LoginView, {
+      global: {
+        plugins: [createPinia(), router, ElementPlus],
+      },
+    });
+
+    await wrapper.find('button').trigger('click');
+    await wrapper.vm.$nextTick();
+
+    // Element Plus 验证错误提示
+    expect(wrapper.find('.el-form-item__error').exists()).toBe(true);
+  });
+});
+```
+
+**测试示例（组合式函数）：**
+
+```typescript
+// usePagination.spec.ts
+import { describe, it, expect } from 'vitest';
+import { usePagination } from '../composables/usePagination';
+
+describe('usePagination', () => {
+  it('默认值应为 page=1, pageSize=20', () => {
+    const { pagination } = usePagination();
+    expect(pagination.page).toBe(1);
+    expect(pagination.pageSize).toBe(20);
+  });
+
+  it('changePage 应更新 page', () => {
+    const { pagination, changePage } = usePagination();
+    changePage(3);
+    expect(pagination.page).toBe(3);
+  });
+
+  it('reset 应重置为默认值', () => {
+    const { pagination, changePage, reset } = usePagination();
+    changePage(5);
+    reset();
+    expect(pagination.page).toBe(1);
+  });
+});
+```
+
+**测试示例（状态管理）：**
+
+```typescript
+// user.spec.ts
+import { describe, it, expect, beforeEach } from 'vitest';
+import { setActivePinia, createPinia } from 'pinia';
+import { useUserStore } from '../store/user';
+import { mockLogin } from '../test/mocks/handlers';
+
+describe('User Store', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it('初始状态 token 为空', () => {
+    const store = useUserStore();
+    expect(store.token).toBe('');
+    expect(store.userInfo).toBeNull();
+  });
+
+  it('登录后应设置 token 和用户信息', async () => {
+    const store = useUserStore();
+    mockLogin({ username: 'admin', password: 'admin123' });
+
+    await store.login({ username: 'admin', password: 'admin123' });
+
+    expect(store.token).toBeTruthy();
+    expect(store.userInfo?.username).toBe('admin');
+  });
+
+  it('退出后应清空状态', () => {
+    const store = useUserStore();
+    store.token = '***';
+    store.logout();
+    expect(store.token).toBe('');
+    expect(store.userInfo).toBeNull();
+  });
+});
+```
+
+### 10.4 测试脚本
+
+```json
+// package.json 根
+{
+  "scripts": {
+    "test": "pnpm -r test",
+    "test:server": "pnpm --filter server test",
+    "test:web": "pnpm --filter web test",
+    "test:e2e": "pnpm --filter server test:e2e",
+    "test:coverage": "pnpm -r test:coverage"
+  }
+}
+```
+
+```json
+// apps/server/package.json
+{
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  }
+}
+```
+
+```json
+// apps/web/package.json
+{
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui"
+  }
+}
+```
+
+### 10.5 测试规范
+
+**命名规范：**
+- 测试文件：`*.spec.ts` 或 `*.test.ts`
+- 测试套件：`describe('模块名', () => {})`
+- 测试用例：`it('应... / 当...时应...', () => {})`
+- 测试数据：用 `faker` 生成，避免硬编码
+
+**编写原则：**
+- **Arrange-Act-Assert**：准备数据 → 执行操作 → 断言结果
+- **单一职责**：一个测试只验证一个行为
+- **独立**：测试之间不共享状态，每次清理数据库
+- **可读**：测试代码即文档，无需注释说明
+
+**覆盖率检查：**
+
+```bash
+# 后端
+pnpm test:server --coverage
+# 输出：
+# ---------------|---------|----------|---------|---------|-------------------
+# File           | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+# ---------------|---------|----------|---------|---------|-------------------
+# All files      |   72.5  |   58.3   |   65.2  |   71.8  |
+# user.service   |   85.2  |   70.0   |   80.0  |   84.1  | 45,67-69
+# ---------------|---------|----------|---------|---------|-------------------
+```
+
+### 10.6 CI/CD 测试流水线（后续扩展）
+
+```yaml
+# .github/workflows/test.yml（预留）
+name: Test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Install dependencies
+        run: pnpm install
+      - name: Run tests
+        run: pnpm test
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+```
+
+---
+
+## 11. 下一步（M2: 后端核心基础设施）
 
 M1 架构设计已确认，等待进入 M2：
 
