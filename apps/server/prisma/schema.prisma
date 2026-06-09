@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique @db.VarChar(50)
+  password  String   @db.VarChar(255)
+  nickname  String?  @db.VarChar(50)
+  email     String?  @db.VarChar(100)
+  phone     String?  @db.VarChar(20)
+  avatar    String?  @db.VarChar(255)
+  deptId    Int?
+  status    Int      @default(1)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @db.Timestamp(6)
+
+  dept          Dept?          @relation(fields: [deptId], references: [id])
+  roles         UserRole[]
+  refreshTokens RefreshToken[]
+
+  @@index([deptId])
+  @@index([status])
+  @@map("sys_user")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @db.VarChar(255) @unique
+  expiresAt DateTime @db.Timestamp(6)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("sys_refresh_token")
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(50)
+  code        String   @unique @db.VarChar(50)
+  description String?  @db.VarChar(200)
+  sort        Int      @default(0)
+  status      Int      @default(1)
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt @db.Timestamp(6)
+
+  users UserRole[]
+  menus RoleMenu[]
+
+  @@index([status])
+  @@map("sys_role")
+}
+
+model UserRole {
+  id     Int @id @default(autoincrement())
+  userId Int
+  roleId Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("sys_user_role")
+}
+
+model Menu {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(50)
+  type        String   @db.VarChar(10)
+  path        String?  @db.VarChar(200)
+  component   String?  @db.VarChar(200)
+  icon        String?  @db.VarChar(50)
+  permission  String?  @db.VarChar(100)
+  parentId    Int?
+  sort        Int      @default(0)
+  status      Int      @default(1)
+  isExternal  Boolean  @default(false)
+  isCache     Boolean  @default(true)
+  isHidden    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt @db.Timestamp(6)
+
+  parent   Menu?  @relation("MenuTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Menu[] @relation("MenuTree")
+  roles    RoleMenu[]
+
+  @@index([parentId])
+  @@index([status])
+  @@index([type])
+  @@map("sys_menu")
+}
+
+model RoleMenu {
+  id     Int @id @default(autoincrement())
+  roleId Int
+  menuId Int
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  menu Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, menuId])
+  @@index([roleId])
+  @@index([menuId])
+  @@map("sys_role_menu")
+}
+
+model Dept {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(50)
+  code      String?  @db.VarChar(50) @unique
+  parentId  Int?
+  leader    String?  @db.VarChar(50)
+  sort      Int      @default(0)
+  status    Int      @default(1)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @db.Timestamp(6)
+
+  parent   Dept?  @relation("DeptTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Dept[] @relation("DeptTree")
+  users    User[]
+
+  @@index([parentId])
+  @@index([status])
+  @@map("sys_dept")
+}
+
+model DictType {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(50)
+  code      String   @unique @db.VarChar(50)
+  status    Int      @default(1)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @db.Timestamp(6)
+
+  items DictItem[]
+
+  @@index([status])
+  @@map("sys_dict_type")
+}
+
+model DictItem {
+  id          Int      @id @default(autoincrement())
+  dictTypeId  Int
+  label       String   @db.VarChar(50)
+  value       String   @db.VarChar(50)
+  sort        Int      @default(0)
+  status      Int      @default(1)
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt @db.Timestamp(6)
+
+  dictType DictType @relation(fields: [dictTypeId], references: [id], onDelete: Cascade)
+
+  @@index([dictTypeId])
+  @@index([status])
+  @@map("sys_dict_item")
+}
