@@ -1,0 +1,293 @@
+# SSS-IMS-Platform 实现路径 (Roadmap)
+
+**版本:** v1.0  
+**日期:** 2026-06-08  
+**状态:** 待确认
+
+---
+
+## 里程碑概览
+
+```
+M0 ──→ M1 ──→ M2 ──→ M3 ──→ M4 ──→ M5 ──→ M6 ──→ M7
+准备   架构   后端    后端    前端    前端    集成    验收
+      设计   核心   业务   框架   业务   联调   收尾
+      1天    2天    2天    2天    2天    1天    1天
+      
+总计: ~11 天 (不含等待确认时间)
+```
+
+---
+
+## M0: 项目准备 (0.5 天)
+
+**目标:** 搭建 Monorepo 骨架，配置开发环境
+
+**任务清单:**
+- [ ] 创建项目目录结构
+- [ ] 初始化 pnpm workspace
+- [ ] 配置 ESLint + Prettier + TypeScript
+- [ ] 配置 Git 仓库 + .gitignore
+- [ ] 配置 Commitlint / 代码提交规范（可选）
+- [ ] 编写 README
+
+**目录结构:**
+```
+sss-ims-platform/
+├── apps/
+│   ├── web/                 # 前端 (Vite + Vue)
+│   │   ├── src/
+│   │   │   ├── api/         # 接口请求
+│   │   │   ├── components/  # 通用组件
+│   │   │   ├── views/       # 页面
+│   │   │   ├── router/      # 路由
+│   │   │   ├── store/       # Pinia
+│   │   │   ├── utils/       # 工具函数
+│   │   │   └── App.vue
+│   │   ├── public/
+│   │   ├── index.html
+│   │   ├── vite.config.ts
+│   │   └── package.json
+│   │
+│   └── server/              # 后端 (NestJS)
+│       ├── src/
+│       │   ├── modules/     # 业务模块
+│       │   ├── common/      # 公共模块
+│       │   ├── prisma/      # 数据库
+│       │   └── main.ts
+│       ├── prisma/
+│       │   └── schema.prisma
+│       ├── nest-cli.json
+│       └── package.json
+│
+├── packages/
+│   └── shared/              # 共享类型/工具 (可选)
+│       └── package.json
+│
+├── pnpm-workspace.yaml
+├── package.json
+├── tsconfig.json
+├── eslint.config.mjs
+└── .prettierrc
+```
+
+**输出物:** `docs/m0-setup.md`
+
+---
+
+## M1: 架构设计 (1 天)
+
+**目标:** 输出技术方案文档，评审通过
+
+**任务清单:**
+- [ ] 数据库 Schema 详细设计（Prisma）
+- [ ] API 接口设计（Swagger 文档）
+- [ ] 前端架构设计（组件规范、状态管理）
+- [ ] 安全设计（JWT 方案、密码策略）
+- [ ] 目录结构规范
+- [ ] 错误码/响应格式规范
+
+**输出物:** `docs/m1-architecture.md`
+
+---
+
+## M2: 后端 - 核心基础设施 (2 天)
+
+**目标:** 搭建 NestJS 核心框架，连接数据库
+
+**任务清单:**
+
+### Day 1
+- [ ] Prisma 初始化 + 数据库连接
+- [ ] 数据库迁移（Migration）
+- [ ] 统一响应格式（ApiResult / ApiException）
+- [ ] 全局异常过滤器（GlobalExceptionFilter）
+- [ ] 日志中间件（Winston / NestJS Logger）
+- [ ] 参数验证管道（ValidationPipe）
+- [ ] Swagger 文档配置
+
+### Day 2
+- [ ] JWT 模块（Access Token + Refresh Token）
+- [ ] 认证守卫（AuthGuard / JwtStrategy）
+- [ ] 权限守卫（PermissionGuard / RolesGuard）
+- [ ] 密码加密工具（bcrypt）
+- [ ] 数据库 Seed 脚本（初始化管理员/菜单/角色）
+
+**输出物:** `docs/m2-backend-core.md`
+
+---
+
+## M3: 后端 - 业务模块 (2 天)
+
+**目标:** 完成所有 CRUD 接口
+
+**任务清单:**
+
+### Day 1
+- [ ] 用户管理模块（User Module）
+  - CRUD + 分页 + 搜索
+  - 角色分配
+  - 密码重置
+- [ ] 角色管理模块（Role Module）
+  - CRUD + 菜单分配
+
+### Day 2
+- [ ] 菜单管理模块（Menu Module）
+  - 树形 CRUD
+  - 路由生成 / 权限标识
+- [ ] 部门管理模块（Dept Module）
+  - 树形 CRUD
+- [ ] 字典管理模块（Dict Module）
+  - 类型 CRUD + 项 CRUD
+
+**输出物:** `docs/m3-backend-business.md`
+
+---
+
+## M4: 前端 - 框架搭建 (2 天)
+
+**目标:** 搭建 Vue 前端骨架，实现登录和布局
+
+**任务清单:**
+
+### Day 1
+- [ ] Vite + Vue 项目初始化
+- [ ] Element Plus 配置 + UnoCSS 配置
+- [ ] 路由系统（Vue Router）
+  - 常量路由（登录页等）
+  - 动态路由（根据权限生成）
+  - 路由守卫（未登录跳转）
+- [ ] Pinia 状态管理
+  - User Store（用户信息/Token）
+  - Permission Store（路由/权限）
+  - App Store（主题/布局配置）
+
+### Day 2
+- [ ] 布局框架（Layout）
+  - 侧边栏（Sidebar）动态菜单
+  - 顶部栏（Header）用户信息/面包屑
+  - 内容区（Main）路由视图
+  - 标签页（Tabs）多标签导航
+- [ ] 登录页面（LoginView）
+  - 表单验证
+  - 登录 API 调用
+  - Token 存储
+- [ ] 请求封装（Axios）
+  - 请求拦截器（Token 注入）
+  - 响应拦截器（统一错误处理 / Token 刷新）
+
+**输出物:** `docs/m4-frontend-framework.md`
+
+---
+
+## M5: 前端 - 业务页面 (2 天)
+
+**目标:** 实现所有管理系统页面
+
+**任务清单:**
+
+### Day 1
+- [ ] 通用组件封装
+  - ProTable（表格 + 搜索 + 分页）
+  - ProForm（表单 + 验证）
+  - ProDialog（对话框 + 表单）
+  - Permission 指令（v-permission）
+- [ ] 用户管理页面
+- [ ] 角色管理页面
+
+### Day 2
+- [ ] 菜单管理页面（树形表格）
+- [ ] 部门管理页面（树形表格）
+- [ ] 字典管理页面
+- [ ] 个人中心页面（修改信息/密码）
+- [ ] 首页仪表盘（Dashboard）
+
+**输出物:** `docs/m5-frontend-business.md`
+
+---
+
+## M6: 集成联调 (1 天)
+
+**目标:** 前后端对接，修复问题
+
+**任务清单:**
+- [ ] 接口对接测试（所有 API 走通）
+- [ ] 权限控制验证
+  - 菜单权限（动态路由）
+  - 按钮权限（v-permission）
+  - API 权限（后端守卫）
+- [ ] Token 刷新机制验证
+- [ ] 数据一致性检查
+- [ ] Bug 修复
+
+**输出物:** `docs/m6-integration.md`
+
+---
+
+## M7: 验收收尾 (1 天)
+
+**目标:** 交付可运行的系统
+
+**任务清单:**
+- [ ] 代码审查（ESLint / 格式检查）
+- [ ] 编写部署文档（README）
+- [ ] 数据库初始化脚本验证
+- [ ] 功能走查（按验收标准逐项检查）
+- [ ] 编写 API 文档说明
+- [ ] 清理无用代码/注释
+- [ ] 最终打包测试
+
+**输出物:** `docs/m7-acceptance.md`
+
+---
+
+## 技术风险与应对
+
+| 风险 | 可能性 | 影响 | 应对措施 |
+|------|--------|------|----------|
+| Prisma 迁移复杂 | 中 | 高 | 先设计好 Schema，避免后期大改 |
+| 动态路由实现复杂 | 中 | 中 | 参考成熟方案（Vue-Admin-Template） |
+| 前端树形组件 | 低 | 中 | Element Plus 有 Tree/TreeSelect 组件 |
+| 权限边界情况 | 中 | 高 | 设计阶段定义清楚权限粒度 |
+| Docker 镜像拉取失败 | 已解决 | 高 | 已配置国内镜像源 |
+
+---
+
+## 角色分工
+
+按 TEAM.md 的标准流程推进：
+
+```
+PM ──→ Arch ──→ DevOps ──→ Dev ──→ QA
+      (联合)   (审核)      (编码)   (验收)
+
+M0~M1: PM + Arch 主导（出方案）
+M2~M3: Dev 后端编码
+M4~M5: Dev 前端编码
+M6:   集成联调（全员）
+M7:   QA 验收
+```
+
+---
+
+## 交付物清单
+
+| 阶段 | 文档 | 代码 | 说明 |
+|------|------|------|------|
+| M0 | setup.md | 项目骨架 | Monorepo 结构 |
+| M1 | architecture.md | Prisma Schema | 技术方案 |
+| M2 | backend-core.md | 后端核心代码 | 认证/授权/基础 |
+| M3 | backend-business.md | 后端业务代码 | 所有 CRUD |
+| M4 | frontend-framework.md | 前端框架代码 | 布局/路由/登录 |
+| M5 | frontend-business.md | 前端业务代码 | 管理页面 |
+| M6 | integration.md | 修复代码 | 联调记录 |
+| M7 | acceptance.md | 最终代码 | 验收报告 |
+
+---
+
+## 下一步行动
+
+1. **老大确认 PRD + Roadmap** ← 当前步骤
+2. 启动 PM 角色，细化需求确认
+3. 启动 Arch 角色，输出技术方案
+4. 按里程碑顺序推进开发
