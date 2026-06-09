@@ -2,7 +2,7 @@
 
 **版本:** v1.0  
 **日期:** 2026-06-08  
-**状态:** 待确认
+**状态:** ✅ M0/M1 已完成，等待 M2 启动
 
 ---
 
@@ -22,14 +22,19 @@ M0 ──→ M1 ──→ M2 ──→ M3 ──→ M4 ──→ M5 ──→ M6
 ## M0: 项目准备 (0.5 天)
 
 **目标:** 搭建 Monorepo 骨架，配置开发环境
+**状态:** ✅ 已完成（2026-06-09）
+**GitHub 提交:** `7301aaa` - feat: M0 project setup
 
 **任务清单:**
-- [ ] 创建项目目录结构
-- [ ] 初始化 pnpm workspace
-- [ ] 配置 ESLint + Prettier + TypeScript
-- [ ] 配置 Git 仓库 + .gitignore
-- [ ] 配置 Commitlint / 代码提交规范（可选）
-- [ ] 编写 README
+- [x] 创建项目目录结构
+- [x] 初始化 pnpm workspace
+- [x] 配置 ESLint + Prettier + TypeScript
+- [x] 配置 Git 仓库 + .gitignore
+- [x] 配置 Commitlint / 代码提交规范（可选）
+- [x] 编写 README
+- [x] 配置 .env.example 环境变量模板
+- [x] 配置 Prisma Schema + seed 脚本
+- [x] 配置 NestJS 入口 + 全局异常/拦截器
 
 **目录结构:**
 ```
@@ -78,16 +83,23 @@ sss-ims-platform/
 ## M1: 架构设计 (1 天)
 
 **目标:** 输出技术方案文档，评审通过
+**状态:** ✅ 已完成（2026-06-09）
 
 **任务清单:**
-- [ ] 数据库 Schema 详细设计（Prisma）
-- [ ] API 接口设计（Swagger 文档）
-- [ ] 前端架构设计（组件规范、状态管理）
-- [ ] 安全设计（JWT 方案、密码策略）
-- [ ] 目录结构规范
-- [ ] 错误码/响应格式规范
+- [x] 数据库 Schema 详细设计（Prisma）
+- [x] API 接口设计（Swagger 文档）
+- [x] 前端架构设计（组件规范、状态管理）
+- [x] 安全设计（JWT 方案、密码策略）
+- [x] 目录结构规范
+- [x] 错误码/响应格式规范
+- [x] **测试架构设计（新增）**
+  - [x] 后端测试策略（Jest + 单元/集成/E2E）
+  - [x] 前端测试策略（Vitest + 组件/组合式函数/状态测试）
+  - [x] 测试规范（Arrange-Act-Assert、覆盖率目标）
+  - [x] CI/CD 测试流水线配置
 
-**输出物:** `docs/m1-architecture.md`
+**输出物:** `docs/m1-architecture.md`（含测试架构章节）
+**GitHub 提交:** `39e6186` - docs: M1 architecture - add testing architecture
 
 ---
 
