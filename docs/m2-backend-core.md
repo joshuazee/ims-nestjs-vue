@@ -249,7 +249,99 @@ npx ts-node prisma/seed.ts
 
 ---
 
-## 7. Swagger 文档
+## 7. 测试架构
+
+### 7.1 测试工具链
+
+| 工具 | 用途 | 版本 |
+|------|------|------|
+| Jest | 测试框架 | 29.x |
+| ts-jest | TypeScript 预处理 | 29.x |
+| supertest | HTTP 断言 | 7.x |
+| @nestjs/testing | NestJS 测试模块 | 11.x |
+
+### 7.2 测试文件结构
+
+```
+apps/server/
+├── jest.config.ts              # Jest 配置
+├── test/
+│   ├── setup.ts                # 全局测试设置
+│   ├── prisma.mock.ts          # Prisma Mock 工具
+│   └── jest-e2e.json           # E2E 测试配置
+└── src/
+    └── modules/
+        ├── user/
+        │   ├── user.service.ts
+        │   ├── user.controller.ts
+        │   ├── user.service.spec.ts     # 单元测试
+        │   └── user.controller.spec.ts  # 集成测试
+        ├── auth/
+        │   ├── auth.service.spec.ts
+        │   └── auth.controller.spec.ts
+        ├── role/
+        │   └── role.service.spec.ts
+        ├── menu/
+        │   └── menu.service.spec.ts
+        ├── dept/
+        │   └── dept.service.spec.ts
+        └── dict/
+            └── dict.service.spec.ts
+```
+
+### 7.3 测试策略
+
+**Service 单元测试**：使用 `createMockPrismaService()` 工具，Mock Prisma 数据库操作，验证业务逻辑：
+- CRUD 操作正确性
+- 分页/搜索参数传递
+- 异常处理（NotFoundException）
+- 关联操作（角色分配、权限分配）
+
+**Controller 集成测试**：使用 `supertest` + NestJS 测试模块，验证 HTTP 接口：
+- 路由映射正确性
+- 请求/响应格式
+- 守卫覆盖（`overrideGuard` / `jest.spyOn`）
+
+### 7.4 运行测试
+
+```bash
+cd apps/server
+
+# 运行所有测试
+pnpm test
+
+# 监视模式
+pnpm test:watch
+
+# 生成覆盖率报告
+pnpm test:cov
+
+# E2E 测试
+pnpm test:e2e
+```
+
+### 7.5 测试结果
+
+```
+Test Suites: 8 passed, 8 total
+Tests:       64 passed, 64 total
+Snapshots:   0 total
+```
+
+| 测试文件 | 类型 | 数量 | 覆盖功能 |
+|----------|------|------|----------|
+| `user.service.spec.ts` | 单元 | 9 | 用户 CRUD、分页、角色分配、密码重置 |
+| `user.controller.spec.ts` | 集成 | 8 | 用户接口 HTTP 测试 |
+| `auth.service.spec.ts` | 单元 | 7 | 登录、刷新 Token、登出、用户信息 |
+| `auth.controller.spec.ts` | 集成 | 4 | 认证接口 HTTP 测试 |
+| `role.service.spec.ts` | 单元 | 7 | 角色 CRUD、菜单权限分配 |
+| `menu.service.spec.ts` | 单元 | 6 | 菜单 CRUD、树形结构 |
+| `dept.service.spec.ts` | 单元 | 6 | 部门 CRUD、树形结构、删除保护 |
+| `dict.service.spec.ts` | 单元 | 10 | 字典类型/项 CRUD |
+
+---
+
+## 8. Swagger 文档
 
 启动服务后访问：
 
@@ -261,9 +353,9 @@ http://localhost:3000/api/docs
 
 ---
 
-## 8. 验证方式
+## 9. 验证方式
 
-### 8.1 编译检查
+### 9.1 编译检查
 
 ```bash
 cd apps/server
@@ -272,7 +364,7 @@ npx nest build
 
 预期输出：`Found 0 errors`
 
-### 8.2 启动服务
+### 9.2 启动服务
 
 ```bash
 $env:DATABASE_URL="postgresql://admin:admin123@localhost:5432/myapp"
@@ -285,7 +377,20 @@ npx nest start --watch
 📚 Swagger UI: http://localhost:3000/api/docs
 ```
 
-### 8.3 测试登录
+### 9.3 运行测试
+
+```bash
+cd apps/server
+npx jest
+```
+
+预期输出：
+```
+Test Suites: 8 passed, 8 total
+Tests:       64 passed, 64 total
+```
+
+### 9.4 测试登录
 
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
