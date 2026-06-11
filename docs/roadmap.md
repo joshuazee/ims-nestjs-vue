@@ -2,7 +2,7 @@
 
 **版本:** v1.0  
 **日期:** 2026-06-08  
-**状态:** ✅ M0/M1/M2/M3 已完成，进入 M4 前端框架搭建
+**状态:** ✅ M0/M1/M2/M3/M4 已完成，进入 M5 前端业务页面
 
 ---
 
@@ -161,34 +161,20 @@ sss-ims-platform/
 ## M4: 前端 - 框架搭建 (2 天)
 
 **目标:** 搭建 Vue 前端骨架，实现登录和布局
+**状态:** ✅ 已完成（2026-06-12）
+**GitHub 提交:** `8d4326a` - feat: M4 frontend framework
 
 **任务清单:**
 
-### Day 1
-- [ ] Vite + Vue 项目初始化
-- [ ] Element Plus 配置 + UnoCSS 配置
-- [ ] 路由系统（Vue Router）
-  - 常量路由（登录页等）
-  - 动态路由（根据权限生成）
-  - 路由守卫（未登录跳转）
-- [ ] Pinia 状态管理
-  - User Store（用户信息/Token）
-  - Permission Store（路由/权限）
-  - App Store（主题/布局配置）
-
-### Day 2
-- [ ] 布局框架（Layout）
-  - 侧边栏（Sidebar）动态菜单
-  - 顶部栏（Header）用户信息/面包屑
-  - 内容区（Main）路由视图
-  - 标签页（Tabs）多标签导航
-- [ ] 登录页面（LoginView）
-  - 表单验证
-  - 登录 API 调用
-  - Token 存储
-- [ ] 请求封装（Axios）
-  - 请求拦截器（Token 注入）
-  - 响应拦截器（统一错误处理 / Token 刷新）
+- [x] Axios 请求封装 + Token 注入/自动刷新
+- [x] Pinia 状态管理（User / Permission / App）
+- [x] 路由守卫 + 动态路由（根据后端权限菜单生成）
+- [x] 登录页面连接真实 API
+- [x] 布局框架（Sidebar + Header + TagsView）
+- [x] 动态菜单渲染
+- [x] 用户信息展示 + 退出登录
+- [x] 侧边栏折叠
+- [x] TypeScript 编译通过
 
 **输出物:** `docs/m4-frontend-framework.md`
 
