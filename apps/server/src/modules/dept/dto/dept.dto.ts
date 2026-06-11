@@ -4,7 +4,7 @@ export class CreateDeptDto {
   @IsString()
   @IsNotEmpty({ message: '部门名称不能为空' })
   @Length(2, 50)
-  name: string;
+  name!: string;
 
   @IsString()
   @IsOptional()

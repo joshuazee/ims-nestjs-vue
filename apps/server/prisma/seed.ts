@@ -1,10 +1,26 @@
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+async function clearData() {
+  console.log('🧹 清理现有数据...');
+  await prisma.refreshToken.deleteMany({});
+  await prisma.userRole.deleteMany({});
+  await prisma.roleMenu.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.role.deleteMany({});
+  await prisma.menu.deleteMany({});
+  await prisma.dept.deleteMany({});
+  await prisma.dictItem.deleteMany({});
+  await prisma.dictType.deleteMany({});
+  console.log('✅ 数据清理完成');
+}
+
 async function main() {
   console.log('🌱 开始初始化数据库...');
+  
+  await clearData();
 
   // 1. 创建部门
   const dept = await prisma.dept.create({
@@ -41,7 +57,7 @@ async function main() {
   ];
 
   // 先创建目录和菜单（不使用 parentId），再创建按钮
-  const createdMenus = [];
+  const createdMenus: any[] = [];
   for (const menu of menus) {
     const created = await prisma.menu.create({
       data: {

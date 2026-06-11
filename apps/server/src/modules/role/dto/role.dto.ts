@@ -4,13 +4,13 @@ export class CreateRoleDto {
   @IsString()
   @IsNotEmpty({ message: '角色名称不能为空' })
   @Length(2, 50)
-  name: string;
+  name!: string;
 
   @IsString()
   @IsNotEmpty({ message: '角色编码不能为空' })
   @Length(2, 50)
   @Matches(/^[a-zA-Z_][a-zA-Z0-9_]*$/, { message: '角色编码只能包含字母、数字和下划线，且不能以数字开头' })
-  code: string;
+  code!: string;
 
   @IsString()
   @IsOptional()
@@ -49,7 +49,7 @@ export class UpdateRoleDto {
 export class AssignMenusDto {
   @IsInt({ each: true })
   @IsNotEmpty({ message: '菜单ID不能为空' })
-  menuIds: number[];
+  menuIds!: number[];
 }
 
 export class RoleQueryDto {

@@ -4,38 +4,38 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty({ message: '用户名不能为空' })
   @Length(3, 50, { message: '用户名长度应在 3-50 位之间' })
-  username: string;
+  username!: string;
 
   @IsString()
   @IsNotEmpty({ message: '密码不能为空' })
   @Length(6, 50, { message: '密码长度应在 6-50 位之间' })
-  password: string;
+  password!: string;
 }
 
 export class RefreshTokenDto {
   @IsString()
   @IsNotEmpty({ message: 'Refresh Token 不能为空' })
-  refreshToken: string;
+  refreshToken!: string;
 }
 
 export class TokenResponseDto {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  refreshExpiresIn: number;
+  accessToken!: string;
+  refreshToken!: string;
+  expiresIn!: number;
+  refreshExpiresIn!: number;
 }
 
 export class UserInfoDto {
-  id: number;
-  username: string;
-  nickname: string | null;
-  email: string | null;
-  phone: string | null;
-  avatar: string | null;
-  deptId: number | null;
-  deptName: string | null;
-  roles: { id: number; name: string }[];
-  permissions: string[];
+  id!: number;
+  username!: string;
+  nickname!: string | null;
+  email!: string | null;
+  phone!: string | null;
+  avatar!: string | null;
+  deptId!: number | null;
+  deptName!: string | null;
+  roles!: { id: number; name: string }[];
+  permissions!: string[];
 }
 
 export class CreateUserDto {
@@ -43,12 +43,12 @@ export class CreateUserDto {
   @IsNotEmpty({ message: '用户名不能为空' })
   @Length(3, 50)
   @Matches(/^[a-zA-Z0-9_]+$/, { message: '用户名只能包含字母、数字和下划线' })
-  username: string;
+  username!: string;
 
   @IsString()
   @IsNotEmpty({ message: '密码不能为空' })
   @Length(6, 50)
-  password: string;
+  password!: string;
 
   @IsString()
   @IsOptional()
@@ -101,20 +101,20 @@ export class UpdateUserStatusDto {
   @IsInt()
   @Min(0)
   @Max(1)
-  status: number;
+  status!: number;
 }
 
 export class ResetPasswordDto {
   @IsString()
   @IsNotEmpty()
   @Length(6, 50)
-  password: string;
+  password!: string;
 }
 
 export class AssignRolesDto {
   @IsInt({ each: true })
   @IsNotEmpty({ message: '角色ID不能为空' })
-  roleIds: number[];
+  roleIds!: number[];
 }
 
 export class UserQueryDto {

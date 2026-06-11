@@ -19,7 +19,7 @@ export interface PaginatedResult<T> {
 
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<ApiResult> {
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<ApiResult> {
     return next.handle().pipe(
       map((data) => ({
         code: ApiCode.SUCCESS,

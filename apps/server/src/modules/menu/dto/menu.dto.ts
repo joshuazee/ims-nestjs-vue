@@ -1,14 +1,14 @@
-import { IsString, IsNotEmpty, Length, IsOptional, IsInt, Min, Max, IsBoolean, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, Length, IsOptional, IsInt, Min, Max, IsBoolean } from 'class-validator';
 
 export class CreateMenuDto {
   @IsString()
   @IsNotEmpty({ message: '菜单名称不能为空' })
   @Length(2, 50)
-  name: string;
+  name!: string;
 
   @IsString()
   @IsNotEmpty({ message: '菜单类型不能为空' })
-  type: 'DIR' | 'MENU' | 'BUTTON';
+  type!: 'DIR' | 'MENU' | 'BUTTON';
 
   @IsString()
   @IsOptional()
@@ -93,5 +93,5 @@ export class UpdateMenuDto {
 export class UpdateMenuSortDto {
   @IsInt({ each: true })
   @IsNotEmpty({ message: '菜单ID顺序不能为空' })
-  menuIds: number[];
+  menuIds!: number[];
 }

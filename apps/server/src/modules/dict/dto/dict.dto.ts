@@ -4,13 +4,13 @@ export class CreateDictTypeDto {
   @IsString()
   @IsNotEmpty({ message: '字典名称不能为空' })
   @Length(2, 50)
-  name: string;
+  name!: string;
 
   @IsString()
   @IsNotEmpty({ message: '字典编码不能为空' })
   @Length(2, 50)
   @Matches(/^[a-zA-Z_][a-zA-Z0-9_]*$/, { message: '字典编码只能包含字母、数字和下划线' })
-  code: string;
+  code!: string;
 }
 
 export class UpdateDictTypeDto {
@@ -29,17 +29,17 @@ export class UpdateDictTypeDto {
 export class CreateDictItemDto {
   @IsInt()
   @IsNotEmpty({ message: '字典类型ID不能为空' })
-  dictTypeId: number;
+  dictTypeId!: number;
 
   @IsString()
   @IsNotEmpty({ message: '标签不能为空' })
   @Length(1, 50)
-  label: string;
+  label!: string;
 
   @IsString()
   @IsNotEmpty({ message: '值不能为空' })
   @Length(1, 50)
-  value: string;
+  value!: string;
 
   @IsInt()
   @Min(0)
