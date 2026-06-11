@@ -48,12 +48,15 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { User, Lock, Setting } from '@element-plus/icons-vue';
+import { useUserStore } from '@/store/user';
 import type { FormInstance, FormRules } from 'element-plus';
 
 const router = useRouter();
+const route = useRoute();
+const userStore = useUserStore();
 const formRef = ref<FormInstance>();
 const loading = ref(false);
 
@@ -79,9 +82,11 @@ const handleLogin = async () => {
     if (!valid) return;
     loading.value = true;
     try {
-      // TODO: 调用登录 API
+      await userStore.login(form.username, form.password);
       ElMessage.success('登录成功');
-      router.push('/');
+      // 跳转首页或重定向地址
+      const redirect = route.query.redirect as string;
+      router.push(redirect || '/');
     } catch (error: any) {
       ElMessage.error(error.message || '登录失败');
     } finally {
