@@ -2,7 +2,7 @@
 
 **版本:** v1.0  
 **日期:** 2026-06-08  
-**状态:** ✅ M0/M1 已完成，等待 M2 启动
+**状态:** ✅ M0/M1/M2/M3 已完成，进入 M4 前端框架搭建
 
 ---
 
@@ -103,54 +103,56 @@ sss-ims-platform/
 
 ---
 
-## M2: 后端 - 核心基础设施 (2 天)
+## M2: 后端 - 核心基础设施 + 业务模块 (2 天)
 
-**目标:** 搭建 NestJS 核心框架，连接数据库
+**目标:** 搭建 NestJS 核心框架，连接数据库，完成所有业务 CRUD 接口
+**状态:** ✅ 已完成（2026-06-09 ~ 2026-06-11）
+**GitHub 提交:** `d5d1030` - feat: M2 backend core + business CRUD
 
 **任务清单:**
 
-### Day 1
-- [ ] Prisma 初始化 + 数据库连接
-- [ ] 数据库迁移（Migration）
-- [ ] 统一响应格式（ApiResult / ApiException）
-- [ ] 全局异常过滤器（GlobalExceptionFilter）
-- [ ] 日志中间件（Winston / NestJS Logger）
-- [ ] 参数验证管道（ValidationPipe）
-- [ ] Swagger 文档配置
+### Day 1 (M2 核心)
+- [x] Prisma 初始化 + 数据库连接
+- [x] 数据库迁移（Migration）
+- [x] 统一响应格式（ApiResult / ApiException）
+- [x] 全局异常过滤器（GlobalExceptionFilter）
+- [x] 参数验证管道（ValidationPipe）
+- [x] Swagger 文档配置
 
-### Day 2
-- [ ] JWT 模块（Access Token + Refresh Token）
-- [ ] 认证守卫（AuthGuard / JwtStrategy）
-- [ ] 权限守卫（PermissionGuard / RolesGuard）
-- [ ] 密码加密工具（bcrypt）
-- [ ] 数据库 Seed 脚本（初始化管理员/菜单/角色）
+### Day 2 (M2 核心 + M3 业务合并)
+- [x] JWT 模块（Access Token + Refresh Token）
+- [x] 认证守卫（AuthGuard / JwtStrategy）
+- [x] 权限守卫（PermissionGuard / RolesGuard）
+- [x] 密码加密工具（bcrypt）
+- [x] 数据库 Seed 脚本（初始化管理员/菜单/角色）
+- [x] 用户管理模块（User）- CRUD + 分页 + 角色分配 + 密码重置
+- [x] 角色管理模块（Role）- CRUD + 菜单分配
+- [x] 菜单管理模块（Menu）- 树形 CRUD
+- [x] 部门管理模块（Dept）- 树形 CRUD
+- [x] 字典管理模块（Dict）- 类型+项 CRUD
+- [x] 单元测试补完（64 tests passed）
+
+**说明:** M3 后端业务模块在 M2 阶段同步完成，避免分阶段造成的重复上下文切换。
 
 **输出物:** `docs/m2-backend-core.md`
 
 ---
 
-## M3: 后端 - 业务模块 (2 天)
+## M3: 后端 - 业务模块 (已合并至 M2)
 
 **目标:** 完成所有 CRUD 接口
+**状态:** ✅ 已完成（M2 阶段合并完成）
+**GitHub 提交:** 同 M2 `d5d1030`
 
 **任务清单:**
 
-### Day 1
-- [ ] 用户管理模块（User Module）
-  - CRUD + 分页 + 搜索
-  - 角色分配
-  - 密码重置
-- [ ] 角色管理模块（Role Module）
-  - CRUD + 菜单分配
+- [x] 用户管理模块（User Module）- CRUD + 分页 + 搜索 + 角色分配 + 密码重置
+- [x] 角色管理模块（Role Module）- CRUD + 菜单分配
+- [x] 菜单管理模块（Menu Module）- 树形 CRUD
+- [x] 部门管理模块（Dept Module）- 树形 CRUD
+- [x] 字典管理模块（Dict Module）- 类型 CRUD + 项 CRUD
 
-### Day 2
-- [ ] 菜单管理模块（Menu Module）
-  - 树形 CRUD
-  - 路由生成 / 权限标识
-- [ ] 部门管理模块（Dept Module）
-  - 树形 CRUD
-- [ ] 字典管理模块（Dict Module）
-  - 类型 CRUD + 项 CRUD
+**说明:** M3 的业务代码已在 M2 阶段同步实现，详见 `docs/m3-backend-business.md`。合并原因是为了避免分阶段导致的重复上下文切换，保证数据库 Schema、DTO 规范、权限守卫的一致性。
 
 **输出物:** `docs/m3-backend-business.md`
 
